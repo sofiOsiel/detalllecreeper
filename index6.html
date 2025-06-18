@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detallito para el </title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background: #000000;
+            overflow: hidden;
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+        }
+       
+        .loading-text {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            color: lime;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .mensaje-central {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: lime;
+            font-family: 'Courier New', monospace;
+            font-size: 2rem;
+            text-shadow: 0 0 10px #000, 0 0 20px #0f0;
+            z-index: 1000;
+            pointer-events: none;
+            user-select: none;
+            white-space: pre;
+        }
+     
+        .imagen-luminosa {
+            max-width: 300px;
+            max-height: 300px;
+            border: 6px solid #205516;
+            box-shadow: 0 0 30px 10px #367a29, 0 0 60px 20px #39ff1466;
+            border-radius: 20px;
+            display: block;
+            margin: 0 auto;
+            background: #222;
+        }
+
+        @keyframes brillar {
+            from {
+                border-width: 10px;
+            }
+            to {
+                border-width: 20px;
+            }
+        }
+
+        #btnMusica {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            background: #222;
+            color: #39ff14;
+            border: 2px solid #39ff14;
+            border-radius: 12px;
+            box-shadow: 0 0 10px #39ff14;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Adaptación para pantallas pequeñas (celulares) */
+        @media (max-width: 600px) {
+            .loading-text {
+                font-size: 10px;
+                right: 10px;
+                bottom: 10px;
+                max-width: 80vw;
+                text-align: right;
+            }
+            .mensaje-central {
+                font-size: 1.1rem;
+                padding: 0 8px;
+                max-width: 95vw;
+                text-align: center;
+                word-break: break-word;
+                white-space: normal;
+            }
+            #btnMusica {
+                font-size: 1rem;
+                padding: 0.7rem 1.2rem;
+                max-width: 90vw;
+                white-space: normal;
+            }
+            .imagen-luminosa {
+                max-width: 90vw;
+                max-height: 35vh;
+            }
+            #mensaje3-contenido {
+                gap: 10px !important;
+            }
+            /* Adaptación para pantallas para la imagen del creeper*/
+            #canvas {
+                
+                 width: 200px !important;
+                height: 200px !important
+                
+            }
+        }
+      /* Adaptación para pantallas el estallido de cuadrados) */
+        .fullscreen-canvas {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            min-width: 100vw !important;
+            min-height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            z-index: 9999 !important;
+            background: transparent !important;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="loading-text" id="loadingText">...</div>
+    <div class="mensaje-central" id="mensajeCentral"></div>
+    <audio id="musicaFondo" src="musica1.mpeg" loop></audio>
+    <button id="btnMusica">
+        Haz click 
+    </button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const loadingText = document.getElementById('loadingText');
+
+        // Tamaño del Creeper 
+        const creeperWidth = 400;
+        const creeperHeight = 400;
+
+        // Mantener canvas del tamaño del creeper, pero para el estallido lo usaremos en toda la pantalla
+        canvas.width = creeperWidth;
+        canvas.height = creeperHeight;
+        canvas.style.position = 'fixed';
+        canvas.style.bottom = '-10px';
+        canvas.style.right = '-10px';
+
+        //  imagen
+        const img = new Image();
+        img.src = 'creeper.jpeg-remove.png';//la imagen esta sin fondo
+        img.onload = function() {
+            drawProgressively();
+        };
+        img.onerror = function() {
+            loadingText.textContent = 'Error al cargar ';
+        };
+
+        // Dibujo progresivo
+        function drawProgressively() {
+            let rowsDrawn = 0;
+            const totalRows = creeperHeight;
+            const speed = 2; // Filas por frame (ajustar velocidad)
+
+            function draw() {
+                // Dibujar las próximas filas
+                const rowsToDraw = Math.min(speed, totalRows - rowsDrawn);
+                if (rowsToDraw <= 0) {
+                    loadingText.textContent = '';
+                    setTimeout(() => {
+                        loadingText.style.opacity = '0';
+                        escribirMensaje(); // <-- Inicia el mensaje aquí
+                    }, 500);
+                    return;
+                }
+
+                ctx.drawImage(
+                    img,
+                    0, rowsDrawn, // Coordenadas de origen (recorte)
+                    creeperWidth, rowsToDraw, // Tamaño del recorte
+                    0, rowsDrawn, // Posición en canvas
+                    creeperWidth, rowsToDraw // Tamaño en canvas
+                );
+
+                rowsDrawn += rowsToDraw;
+                loadingText.textContent = `Dibujando: ${Math.floor((rowsDrawn / totalRows) * 100)}%`;
+                requestAnimationFrame(draw);
+            }
+
+            // Fondo negro mientras se carga
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, creeperWidth, creeperHeight);
+            
+            // Iniciar animación
+            setTimeout(draw, 300);
+        }
+
+        // Efecto máquina de escribir para el mensaje central
+        const mensajeArriba = "estallo de amor por ty";
+        const mensajeAbajo = "❤️Joel Benjamin❤️";
+        const mensajeDiv = document.getElementById('mensajeCentral');
+        let i = 0;
+        let j = 0;
+        let escribiendoArriba = true;
+
+        function escribirMensaje() {
+            if (escribiendoArriba) {
+                if (i <= mensajeArriba.length) {
+                    mensajeDiv.innerHTML = `<span>${mensajeArriba.slice(0, i)}</span>`;
+                    i++;
+                    setTimeout(escribirMensaje, 60);
+                } else {
+                    escribiendoArriba = false;
+                    setTimeout(escribirMensaje, 300); // pequeña pausa antes de la segunda línea
+                }
+            } else {
+                if (j <= mensajeAbajo.length) {
+                    mensajeDiv.innerHTML = `<span>${mensajeArriba}</span><br><span style="display:inline-block; width:100%; text-align:center;">${mensajeAbajo.slice(0, j)}</span>`;
+                    j++;
+                    setTimeout(escribirMensaje, 60);
+                } else {
+                    // Cuando termina el mensaje, espera 2 segundos y hace el estallido
+                    setTimeout(estallidoPantalla, 2000);
+                }
+            }
+        }
+
+        // Efecto de estallido en TODO el canvas
+        function estallidoPantalla() {
+            mensajeDiv.innerHTML = ""; // Quita el mensaje central
+
+            // Añade la clase para pantalla completa
+            canvas.classList.add('fullscreen-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Ajuste adaptable: muchos cuadros pequeños en cualquier pantalla
+            let minSquares = Math.min(window.innerWidth, window.innerHeight) < 500 ? 18 : 28;
+            let cols = Math.max(Math.round(window.innerWidth / 22), minSquares);
+            let rows = Math.max(Math.round(window.innerHeight / 22), minSquares);
+
+            const squareW = canvas.width / cols;
+            const squareH = canvas.height / rows;
+            const colores = [
+                "#4aff4a",   // verde claro
+                "#145214",   // verde oscuro
+                "#baffba",   // verde mucho más claro
+                "#b0b0b0"    // plomo
+            ];
+            let squares = [];
+
+            // Inicializa los cuadrados
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    squares.push({
+                        x: x * squareW,
+                        y: y * squareH,
+                        color: colores[Math.floor(Math.random() * colores.length)],
+                        dx: (Math.random() - 0.5) * 18,
+                        dy: (Math.random() - 0.5) * 18,
+                        alpha: 1
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let s of squares) {
+                    ctx.globalAlpha = s.alpha;
+                    ctx.fillStyle = s.color;
+                    ctx.fillRect(s.x, s.y, squareW, squareH);
+                    s.x += s.dx;
+                    s.y += s.dy;
+                    s.alpha -= 0.025;
+                    if (s.alpha < 0) s.alpha = 0.1;
+                }
+                ctx.globalAlpha = 1;
+                if (!window.mensajeFinalMostrado) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            animate();
+
+            // Después de 2 segundos, muestra el mensaje final
+            setTimeout(() => {
+                mensajeSoloPorTyAmor();
+            }, 2000);
+        }
+
+        // Mensaje final con efecto máquina de escribir
+        function mensajeSoloPorTyAmor() {
+            window.mensajeFinalMostrado = true;
+            mensajeDiv.innerHTML = "";
+            mensajeDiv.style.opacity = "1";
+            const mensaje = "Haces explotar mi corazon ❤️";
+            const mensaje2 = "By:Sofi Osiel";
+            let k = 0;
+            let l = 0;
+
+            // Crea el contenedor para el mensaje y la imagen
+            mensajeDiv.innerHTML = `
+                <div id="mensaje3-contenido" style="display:flex; flex-direction:column; align-items:center; gap:20px;"></div>
+            `;
+            const contenedor = document.getElementById('mensaje3-contenido');
+            const span = document.createElement('span');
+            contenedor.appendChild(span);
+
+            // Imagen centrada con borde luminoso
+            const img = document.createElement('img');
+            img.src = "disfraz.jpeg";
+            img.className = "imagen-luminosa";
+            img.alt = "Imagen especial";
+            contenedor.appendChild(img);
+
+            // Span para el segundo mensaje
+            const span2 = document.createElement('span');
+            span2.style.marginTop = "10px";
+            contenedor.appendChild(span2);
+
+            function escribir() {
+                if (k <= mensaje.length) {
+                    span.textContent = mensaje.slice(0, k);
+                    k++;
+                    setTimeout(escribir, 60);
+                } else {
+                    setTimeout(escribir2, 400); // pequeña pausa antes del segundo mensaje
+                }
+            }
+
+            function escribir2() {
+                if (l <= mensaje2.length) {
+                    span2.textContent = mensaje2.slice(0, l);
+                    l++;
+                    setTimeout(escribir2, 60);
+                }
+            }
+
+            escribir();
+        }
+
+        // Reproducir música al primer toque/click por políticas de los navegadores
+        function iniciarMusica() {
+            const audio = document.getElementById('musicaFondo');
+            audio.volume = 0.5; // Puedes ajustar el volumen (0.0 a 1.0)
+            audio.play();
+            window.removeEventListener('click', iniciarMusica);
+            window.removeEventListener('touchstart', iniciarMusica);
+        }
+        window.addEventListener('click', iniciarMusica);
+        window.addEventListener('touchstart', iniciarMusica);
+
+        // Iniciar música también al hacer click en el botón
+        document.getElementById('btnMusica').onclick = function() {
+            const audio = document.getElementById('musicaFondo');
+            audio.volume = 0.5;
+            audio.play();
+            this.style.display = 'none';
+        };
+    </script>
+</body>         
+</html>
